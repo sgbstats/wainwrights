@@ -1,0 +1,13 @@
+name: wainwrights
+title: wainwrights
+username: wainwrights
+account: wainwrights
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 16137938
+bundleId: 11213559
+url: https://wainwrights.shinyapps.io/wainwrights/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: gridrefconvert.R

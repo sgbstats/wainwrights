@@ -85,5 +85,5 @@ for(i in 1:nrow(wainwrights)){
   out=out %>% rbind.data.frame(os_to_latlon(wainwrights$os[i]))
 }
 wainwrights$latitude=out$latitude
-wainwrights$longtitude=out$longitude
+wainwrights$longitude=out$longitude
 googlesheets4::write_sheet(wainwrights, ss="https://docs.google.com/spreadsheets/d/1asnafeRHRpv9Ddf3HVg6q9Lr0cn3hevj4c2aq2hqcZc/edit?gid=0#gid=0", sheet = "wainwrights")
