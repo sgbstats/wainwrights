@@ -4,7 +4,8 @@ library(leaflet)
 library(googlesheets4)
 library(dplyr)
 library(flextable)
-
+library(reactable)
+library(tidyverse)
 options(gargle_oauth_cache = ".secrets",
         gargle_oauth_email = TRUE)
 
@@ -31,7 +32,7 @@ ui <- fluidPage(
     tabPanel("Map", 
              leafletOutput("lakeDistrictMap", height = "800px")),
     tabPanel("Stats",
-             uiOutput("table",inline = TRUE, style = "margin:0px; padding:0px"))
+             reactableOutput("table"))
   )
 )
 
@@ -60,8 +61,8 @@ server <- function(input, output, session) {
       )
   })
   
-  output$table=renderUI({
-    wainwrights %>% dplyr::select(Name, height, L,B,J) %>% 
+  output$table=renderReactable({
+    w=wainwrights %>% dplyr::select(Name, height, L,B,J) %>% 
       pivot_longer(cols=c(L,B,J), names_to = "person", values_to = "completion") %>% 
       mutate(completion=!is.na(completion),
              person=case_when(person=="L"~"Lawrence",
@@ -69,7 +70,9 @@ server <- function(input, output, session) {
                               person=="J"~"John")) %>% 
       filter(completion) %>% 
       summarise(total=n(),
-                total_height=sum(height), .by="person") %>% 
+                total_height=sum(height),
+                done=paste(Name, collapse =", "),
+                .by="person") %>% 
       mutate(test=1) %>% 
       merge(wainwrights %>% 
               mutate(test=1) %>% 
@@ -77,14 +80,34 @@ server <- function(input, output, session) {
                         total_height=sum(height, na.rm = T), .by = "test"), by="test", all=T  ) %>% 
       dplyr::select(-test) %>% 
       mutate(total_pc=paste0(sprintf("%.1f", 100*total.x/total.y)),
-             height_pc=paste0(sprintf("%.1f", 100*total_height.x/total_height.y))) %>% 
-      dplyr::select(person, total.x, total_pc, total_height.x, height_pc) %>% 
-      flextable() %>% 
-      set_header_labels(person="", total.x="Summits", total_pc="%",total_height.x="Total summit height",height_pc="%"  ) %>% 
-      autofit() %>%
-      font(fontname = "Arial", part="all") %>% 
-      htmltools_value()
+             height_pc=paste0(sprintf("%.1f", 100*total_height.x/total_height.y))) 
+    #dplyr::select(person, total.x, total_pc, total_height.x, height_pc) 
     
+    reactable(w[,c(1,2,7,3,8)],
+              columns=list(
+                person=colDef(width=100, name=""),
+                total.x=colDef(width=100, name="Summits"),
+                total_pc=colDef(width=50, name="%"),
+                total_height.x=colDef(width=100, name="Total Summit Height (m)"),
+                height_pc=colDef(width=50, name="%")
+              ),
+              details = function(index){
+                div(
+                  style = "padding: 16px;",
+                  paste0(w$done[index])
+                )
+              },
+              defaultPageSize = 15
+    )
+    
+    
+    # %>% 
+    #   flextable() %>% 
+    #   set_header_labels(person="", total.x="Summits", total_pc="%",total_height.x="Total summit height",height_pc="%"  ) %>% 
+    #   autofit() %>%
+    #   font(fontname = "Arial", part="all") %>% 
+    #   htmltools_value()
+    # 
   })
 }
 
